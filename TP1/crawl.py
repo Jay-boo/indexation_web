@@ -1,19 +1,24 @@
 import requests
+import sqlite3
 import time
+import pandas as pd
 from bs4 import BeautifulSoup
 import urllib.robotparser
 from urllib.parse import urlparse
 import socket
 from htmldate import find_date
-
-from requests.api import get
 from requests.exceptions import TooManyRedirects
 
 socket.setdefaulttimeout(1)
 
 
 def url_date(url):
-    find_date(url)
+    try:
+        return find_date(url)
+    except:
+        return ''# to do later
+    
+
 
 
 
@@ -116,14 +121,28 @@ class Crawler:
                 f.write(line+"\n")
 
     def save_in_RDB(self):
-        pass
+        data_to_stock=pd.DataFrame({
+                'url':self.output,
+                'date':[url_date(url) for url in self.output]}
+                )
+        conn=sqlite3.connect("urls.db")
+        data_to_stock.to_sql("my_data",conn,if_exists="replace")
+        conn.execute(
+        """
+        create table urlTable as 
+        select * from my_data;
+        """)
+
+        
+
+
 
 if __name__ == "__main__":
     # url="https://ensai.fr/"
     url="https://twitter.com/"
-    crawler=Crawler(url,100)
-
+    crawler=Crawler(url,10)
     crawler.crawl()
-    crawler.write_output_urls_in_text_file()
+    crawler.save_in_RDB()
+    # crawler.write_output_urls_in_text_file()
 
 

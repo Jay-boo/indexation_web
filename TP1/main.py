@@ -1,26 +1,27 @@
 from time import time
-from crawl import Crawler
+from crawl.crawl import Crawler
+import distutils.util
+import argparse
 
-# url="https://ensai.fr/"
-# url="https://twitter.com/"
-url="https://docs.python.org/fr/3/library/urllib.robotparser.html#module-urllib.robotparser"
-# crawler=Crawler(url,200)
-# start_oneThread=time()
-# crawler.crawl()
-# end_oneThread=time()
-# print(len(crawler.output))
-#
-#
-crawler=Crawler(url,200)
-
-start_multiThread=time()
-crawler.multiThread_crawl()
-end_multiThread=time()
-print(len(crawler.output))
-crawler.write_output_urls_in_text_file()
-# print(f"Duration one thread : {end_oneThread - start_oneThread}")
-print(f"Duration multi thread : {end_multiThread - start_multiThread}")
-
-# crawler.save_in_RDB()
-# crawler.write_output_urls_in_text_file()
-
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--url")
+    parser.add_argument("--limit_pages",type=int,default=50)
+    parser.add_argument("--multithread",type=lambda x:bool(distutils.util.strtobool(x)),default='False')
+    args = parser.parse_args()
+    url = args.url
+    limit_pages = args.limit_pages
+    multithread = args.multithread
+    print(url,limit_pages,multithread)
+    
+    crawler=Crawler(url,limit_pages)
+    start=time()
+    if multithread:
+        crawler.multiThread_crawl()
+    else:
+        crawler.crawl()
+    end=time()
+    crawler.write_output_urls_in_text_file()
+    print(crawler.output)
+    print(f"Timer : {end- start}")
+        

@@ -1,9 +1,6 @@
-CRAWLER 
-    __init__.py
-      crawl.py
-      utils.py
-TESTS
-  test_crawler.py
-README.Md
-main.py
-requirements.txt
+simple crawler 
+
+
+With option multiThread
+
+Visualize sqlite local DB on browser : https://inloop.github.io/sqlite-viewer/

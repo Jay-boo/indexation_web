@@ -1,48 +1,39 @@
 import requests
-from requests.api import request
+from datetime import datetime
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.util.langhelpers import NoneType
-from database  import engine 
-
-
+from crawl.utils import url_date
+from crawl.database import Pages, init,engine
 from threading import Thread
 from urllib.request import urlopen
-import sqlite3
 import time
-import pandas as pd
 from bs4 import BeautifulSoup
 import urllib.robotparser
 from urllib.parse import urlparse
 import socket
-from htmldate import find_date
 from requests.exceptions import TooManyRedirects
 from urllib.error import URLError
+
+
+
 socket.setdefaulttimeout(1)
 
-
-def url_date(url):
-    try:
-        return find_date(url)
-    except:
-        return ''# to do later
-
-
 class crawlerThread(Thread):
-    def __init__(self,crawler,url):
+    def __init__(self,crawler,url,session):
         Thread.__init__(self)
         self.crawler=crawler
         self.url=url
         self.new_pages=[]
+        self.session=session
 
     def run(self):
         print(f"crawling ------------- {self.url}")
-        new_urls=self.crawler.get_allowed_urls_with_sitemaps(self.url)
+        new_urls=self.crawler.get_allowed_urls_with_sitemaps(self.session,self.url)
         self.new_pages+=new_urls
 
-        new_urls=self.crawler.get_allowed_urls_with_robots(self.url)
+        new_urls=self.crawler.get_allowed_urls_with_robots(self.session,self.url)
         self.new_pages+=new_urls
         time.sleep(5)
-        print(f"end------------- {self.url}: new pages : {len(self.new_pages)}")
+        print(f"end------------- {self.url}:  count new pages : {len(self.new_pages)}")
         
 
 
@@ -51,7 +42,8 @@ class crawlerThread(Thread):
 
 
 class Crawler:
-    def __init__(self,seed:str,stop:int=100):
+    def __init__(self,seed:str,stop:int=50):
+        init()
         self.seed=seed
         self.stop=stop
         self.frontier=[]
@@ -77,6 +69,7 @@ class Crawler:
             return []
 
         sitemaps_not_exploit=[sitemap for sitemap in sitemaps if sitemap not in self.visited_sitemaps ]
+        is_completed=False
         for sitemap in sitemaps_not_exploit :
             print(f"----------looking at sitemap {sitemap}")
             try:
@@ -91,10 +84,23 @@ class Crawler:
             urls=xml.find_all("url")
             for url in urls:
                 loc=url.findNext("loc").text
+                is_completed=self.add_page_to_db(session,loc,requests.get(loc).text,url_date(loc))
+                if is_completed:
+                    print("is break")
+                    break
                 pages.append(loc)
-                self.add_page_to_db(session,loc,None,url_date(loc))
+            if is_completed:
+                break
+                    
         self.visited_sitemaps+=sitemaps_not_exploit
         return pages
+
+
+
+
+
+
+
 
     def get_allowed_urls_with_robots(self,session,url):
         """
@@ -125,17 +131,22 @@ class Crawler:
         return list(set(pages))
 
 
+
+
+
+
+
     def crawl(self):
         Session=sessionmaker(bind=engine)
         session=Session()
-        first_allowed_urls=list(set(self.get_allowed_urls_with_sitemaps(session,self.seed) +self.get_allowed_urls_with_robots(session,self.seed)))
+        first_allowed_urls=list(set(self.get_allowed_urls_with_sitemaps(session,self.seed)))
         time.sleep(5)
         print(first_allowed_urls)
         self.frontier=first_allowed_urls
         self.output=first_allowed_urls
         if  len(self.frontier)>=self.stop :
+            print("out")
             return self.output[0:self.stop]
-
         while  True:
             flag=True
             new_outputs=[]
@@ -144,64 +155,44 @@ class Crawler:
             for url in self.frontier:
                 print(f"----------------------looking at {url} in frontier")
                 #-----------------------
-                new_urls=self.get_allowed_urls_with_sitemaps(url)
+                new_urls=self.get_allowed_urls_with_sitemaps(session,url)
                 new_outputs+=new_urls
                 if len(new_urls) >0:
                     waiting_url_output.remove(url)
-
                 if len(list(set(new_outputs+waiting_url_output))) >= self.stop:
+                    print("flag is False")
                     flag=False
                     break
-
-                #-------------
-                # Getting new urls from robots and links in page
-                new_urls=self.get_allowed_urls_with_robots(url)
-                new_outputs+=new_urls
-
                 print(f"Total size of the outputs: {len(list(set(new_outputs+waiting_url_output)))}")
-
-                #------------------
-                # Test if we have enough outputs :
-                if len(list(set(new_outputs+waiting_url_output))) >= self.stop:
-                    flag=False
-                    break
-
                 time.sleep(5)#Time page crawling
 
-            print("----- See every url in the actual output")
-            #------------------------
-            # update attribute
             final_output=list(set(waiting_url_output+new_outputs))
-
-            #--------------------------
-            # Put every url in database
-            
-            #-----------------
-            # Detect when we have no more url
             difference=True
             for x in set(final_output +self.output):
                 if final_output.count(x)!=self.output.count(x):
                     difference= False
             if difference:
-                print("no more urls")
+                print("No more urls to explore")
                 flag=False
 
             self.frontier=final_output
             self.output=final_output
             
             if not flag:
-                print("We have enough output or there is no more url ")
+                print("----------------finish-----------------")
                 break
                 
+        session.commit()
         self.output=self.output[0:self.stop]
         return self.output
 
 
 
     def multiThread_crawl(self):
-        first_allowed_urls=list(set(self.get_allowed_urls_with_sitemaps(self.seed) +self.get_allowed_urls_with_robots(self.seed)))
+        Session=sessionmaker(bind=engine)
+        session=Session()
+        first_allowed_urls=list(set(self.get_allowed_urls_with_sitemaps(session,self.seed)))
         time.sleep(5)
-        print(first_allowed_urls)
         self.frontier=first_allowed_urls
         self.output=first_allowed_urls
         if  len(self.frontier)>=self.stop :
@@ -212,25 +203,35 @@ class Crawler:
             flag=True
             waiting_url_output=self.output
             new_outputs=[]
+            root_urls_in_thread=[]#WE don't want the same sit to be crawled in two parallele thread
+
             for url in self.frontier:
+
                 root_url=urlparse(url).scheme + "://"+ urlparse(url).hostname
-                x=crawlerThread(self,url)
-                threads.append(x)
-                x.start()
-                if (len(threads)>=5 or url==self.frontier[-1]) :
-                    for index, thread in enumerate(threads):
-                        thread.join()
-                    print(waiting_url_output)
-                    for index, thread in enumerate(threads):
-                        new_outputs+=thread.new_pages
-                        if len(thread.new_pages) >0:
-                            waiting_url_output.remove(thread.url)
-                    new_outputs=list(set(new_outputs))
-                    if(len(list(set(waiting_url_output+new_outputs)))>=self.stop):
-                        print("Enough URL")
-                        flag=False
-                        break
-                    threads=list()
+
+                if root_url not in root_urls_in_thread:
+                    x=crawlerThread(self,url,session)
+                    threads.append(x)
+                    x.start()
+                    root_urls_in_thread.append(root_url)
+                    if (len(threads)>=5 or url==self.frontier[-1]) :
+                        for index, thread in enumerate(threads):
+                            thread.join()
+                        print(waiting_url_output)
+                        for index, thread in enumerate(threads):
+                            new_outputs+=thread.new_pages
+                            if len(thread.new_pages) >0:
+                                waiting_url_output.remove(thread.url)
+                        new_outputs=list(set(new_outputs))
+                        if(len(list(set(waiting_url_output+new_outputs)))>=self.stop):
+                            print("Enough URL")
+                            flag=False
+                            break
+                        threads=list()
+                        root_urls_in_thread=[]
+                else:
+                    pass
+
             final_output=list(set(waiting_url_output+new_outputs))
             
             #-----------------
@@ -249,44 +250,44 @@ class Crawler:
             if not flag:
                 print("We have enough output or there is no more url ")
                 break
+        session.commit()
         self.output=self.output[0:self.stop]
         return self.output    
 
-    def add_page_to_db(self,session,url:str,document:str|NoneType,date):
+
+
+
+
+    def add_page_to_db(self,session,url:str,document,date):
         """
         Add pages to the session query verifying the urls are unique
+        and return boolean to know if db is complet
+
         """
-            # new_urls[url] = WebPageDB(url=url, creation_date=self.find_date(url))
+        count=session.query(Pages).count()
+        print(count)
+        if count>= self.stop: # If we have enough urls
+            return True
+        if date !='': 
+            date=datetime.strptime(date,"%Y-%m-%d")
+        else:
+            date=None
+        res=(
+            session.query(Pages).filter(Pages.url==url).all()
+        )
+        if res==[]:
+            # assert url not already in session
+            page=Pages(url=url,document=document,date=date)
+            session.add(page)
+        return False
 
-        for each in session.query(WebPageDB).filter(WebPageDB.url.in_(new_urls.keys())).all():
-            session.merge(new_urls.pop(each.url))
-        # Only add those posts which did not exist in the database 
 
-        session.add_all(new_urls.values())
-
-        # Now we commit our modifications (merges) and inserts (adds) to the database!
-        session.commit()
         
-
-
-        
-
-
-
     def write_output_urls_in_text_file(self):
+        """
+        Write crawler urls in crawled_webpages.txt
+        """
         with open("crawled_webpages.txt","w") as f:
             for line in self.output[0:self.stop]:
                 f.write(line+"\n")
 
-    def save_in_RDB(self):
-        data_to_stock=pd.DataFrame({
-                'url':self.output,
-                'date':[url_date(url) for url in self.output]}
-                )
-        conn=sqlite3.connect("urls.db")
-        data_to_stock.to_sql("my_data",conn,if_exists="replace")
-        conn.execute(
-        """
-        create table urlTable as 
-        select * from my_data;
-        """)

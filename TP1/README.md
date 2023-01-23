@@ -1,0 +1,9 @@
+CRAWLER 
+    __init__.py
+      crawl.py
+      utils.py
+TESTS
+  test_crawler.py
+README.Md
+main.py
+requirements.txt

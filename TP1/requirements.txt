@@ -2,5 +2,6 @@ htmldate
 bs4
 requests
 argparse
+sqlalchemy
 
 

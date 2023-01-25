@@ -103,7 +103,7 @@ class Crawler:
 
 
 
-    def get_allowed_urls_with_robots(self,session,url):
+    def get_allowed_urls_with_robots(self,session,url,add_page_to_db=True):
         """
         Get new url checking robots.txt and urls in the url page
         """
@@ -124,7 +124,8 @@ class Crawler:
                 rp.read()
                 if rp.can_fetch("*",link):
                     pages.append(link)
-                    self.add_page_to_db(session,link,response.text,url_date(link))
+                    if add_page_to_db:
+                        self.add_page_to_db(session,link,response.text,url_date(link))
 
             except:
                 pass
@@ -189,7 +190,7 @@ class Crawler:
     def multiThread_crawl(self):
         Session=sessionmaker(bind=engine)
         session=Session()
-        first_allowed_urls=list(set(self.get_allowed_urls_with_robots(session,self.seed)))
+        first_allowed_urls=list(set(self.get_allowed_urls_with_robots(session,self.seed,False)))
         time.sleep(5)
         self.frontier=first_allowed_urls
         self.output=first_allowed_urls

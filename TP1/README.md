@@ -26,11 +26,10 @@ python3 main.py --url https://ensai.fr/ --limit_pages 60 --multithread False
 ### ⮕ Launch with docker
 In TP1/ directory use the following commands to build and launch the docker image
 ```
-docker build -t my_image_name .
-docker run my_image_name
+docker build -t image_tp1 .
+docker run image_tp1
 ```
-You can modify argument in the `Dockerfile` before building and launching the image
-
+You can modify argument in the `Dockerfile` before building and launching the image and use '-v' option to get the output data in local. Moreover you can rerun the image using `--entrypoint bash ` and just use python3 main.py command in the interactive terminal of the running container.
 ***
 
 ## Storage
@@ -43,6 +42,7 @@ Visualize sqlite local DB on browser : https://inloop.github.io/sqlite-viewer/
 ***
 ## Multi Threading
 The number of thread is limited to 5, and to respect politness 2 web pages with similar root urls can't be in parallel threads.
-This limits its effectiveness because it crawl urls using sitemaps.
+
+**&rarr; In multi-threaded version there in no db storage.**
 
 

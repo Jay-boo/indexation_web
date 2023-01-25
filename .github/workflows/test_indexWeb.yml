@@ -14,7 +14,7 @@ jobs:
         uses: actions/checkout@v3
       -
         name: install requirements
-        run: pip install -r requirements.txt
+        run: cd TP2 && pip install -r requirements.txt
       -
         name: launch tests
-        run: cd TP2 && python -m unittest discover test
+        run: python -m unittest discover test

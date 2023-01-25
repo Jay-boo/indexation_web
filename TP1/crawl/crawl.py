@@ -29,9 +29,6 @@ class crawlerThread(Thread):
         print(f"crawling ------------- {self.url}")
         new_urls=self.crawler.get_allowed_urls_with_sitemaps(self.session,self.url)
         self.new_pages+=new_urls
-
-        new_urls=self.crawler.get_allowed_urls_with_robots(self.session,self.url)
-        self.new_pages+=new_urls
         time.sleep(5)
         print(f"end------------- {self.url}:  count new pages : {len(self.new_pages)}")
         
@@ -56,7 +53,7 @@ class Crawler:
         """
         pages=[]
         rp=urllib.robotparser.RobotFileParser()
-        rp.set_url(urlparse(url).scheme + "://"+ urlparse(url).hostname +"/robots.txt")
+        rp.set_url(f"{urlparse(url).scheme}://{urlparse(url).hostname}/robots.txt")
         try: 
             rp.read()
         except URLError:
@@ -86,7 +83,6 @@ class Crawler:
                 loc=url.findNext("loc").text
                 is_completed=self.add_page_to_db(session,loc,requests.get(loc).text,url_date(loc))
                 if is_completed:
-                    print("is break")
                     break
                 pages.append(loc)
             if is_completed:
@@ -110,7 +106,6 @@ class Crawler:
         try:
             response = requests.get(url)
         except TooManyRedirects:
-            print("We find a Too manyRedirect error while navigating through urls")
             return []
 
         soup = BeautifulSoup(response.text, 'html.parser')
@@ -141,11 +136,10 @@ class Crawler:
         session=Session()
         first_allowed_urls=list(set(self.get_allowed_urls_with_sitemaps(session,self.seed)))
         time.sleep(5)
-        print(first_allowed_urls)
         self.frontier=first_allowed_urls
         self.output=first_allowed_urls
         if  len(self.frontier)>=self.stop :
-            print("out")
+            session.commit()
             return self.output[0:self.stop]
         while  True:
             flag=True
@@ -160,7 +154,6 @@ class Crawler:
                 if len(new_urls) >0:
                     waiting_url_output.remove(url)
                 if len(list(set(new_outputs+waiting_url_output))) >= self.stop:
-                    print("flag is False")
                     flag=False
                     break
                 print(f"Total size of the outputs: {len(list(set(new_outputs+waiting_url_output)))}")
@@ -196,43 +189,61 @@ class Crawler:
         self.frontier=first_allowed_urls
         self.output=first_allowed_urls
         if  len(self.frontier)>=self.stop :
+            session.commit()
             return self.output[0:self.stop]
+        first_counter=0
         
         while True:
             threads=list()
             flag=True
-            waiting_url_output=self.output
+            waiting_url_output=self.output.copy()
+            waiting_url_output_bis=self.output.copy()
             new_outputs=[]
-            root_urls_in_thread=[]#WE don't want the same sit to be crawled in two parallele thread
+            root_urls_in_thread=[]
+            counter=0
 
-            for url in self.frontier:
+            while len(waiting_url_output_bis)>0:
+                print(f"---waiting_url_output-----{first_counter}-{counter}")
+                init_len=len(waiting_url_output_bis)
+                
+                for url in waiting_url_output_bis:
+                    root_url=urlparse(url).scheme + "://"+ urlparse(url).hostname
+                    print(f"------------------root urls in thread-------------{first_counter}-{counter}")
 
-                root_url=urlparse(url).scheme + "://"+ urlparse(url).hostname
-
-                if root_url not in root_urls_in_thread:
-                    x=crawlerThread(self,url,session)
-                    threads.append(x)
-                    x.start()
-                    root_urls_in_thread.append(root_url)
-                    if (len(threads)>=5 or url==self.frontier[-1]) :
+                    if root_url not in root_urls_in_thread:
+                        print("new thread launch ")
+                        
+                        # We can't have 2 thread crawling pages of the same root url
+                        x=crawlerThread(self,url,session)
+                        threads.append(x)
+                        x.start()
+                        root_urls_in_thread.append(root_url)
+                    if (len(threads)>=5 or url==waiting_url_output_bis[-1]) :
                         for index, thread in enumerate(threads):
                             thread.join()
-                        print(waiting_url_output)
                         for index, thread in enumerate(threads):
                             new_outputs+=thread.new_pages
+                            waiting_url_output_bis.remove(thread.url)
+
                             if len(thread.new_pages) >0:
+                                print("new pages added")
                                 waiting_url_output.remove(thread.url)
+                            
                         new_outputs=list(set(new_outputs))
+                        print(f"---------------------new output count{new_outputs}")
                         if(len(list(set(waiting_url_output+new_outputs)))>=self.stop):
                             print("Enough URL")
                             flag=False
                             break
                         threads=list()
                         root_urls_in_thread=[]
-                else:
-                    pass
+                assert len(waiting_url_output_bis)< init_len
+                if not flag:
+                    break
+                counter+=1
 
             final_output=list(set(waiting_url_output+new_outputs))
+            print(len(final_output))
             
             #-----------------
             # Detect when we have no more url
@@ -265,7 +276,6 @@ class Crawler:
 
         """
         count=session.query(Pages).count()
-        print(count)
         if count>= self.stop: # If we have enough urls
             return True
         if date !='': 

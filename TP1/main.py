@@ -12,8 +12,9 @@ if __name__ == "__main__":
     url = args.url
     limit_pages = args.limit_pages
     multithread = args.multithread
-    print(url,limit_pages,multithread)
-    
+    print('------------prompt-------------------')
+    print(f"seed:{url} \nmax urls:{limit_pages} \nmultithread:{multithread}") 
+    print('-------------------------------------\n\n')
     crawler=Crawler(url,limit_pages)
     start=time()
     if multithread:
@@ -22,6 +23,6 @@ if __name__ == "__main__":
         crawler.crawl()
     end=time()
     crawler.write_output_urls_in_text_file()
-    print(crawler.output)
+    print(len(crawler.output))
     print(f"Timer : {end- start}")
         

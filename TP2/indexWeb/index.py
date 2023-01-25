@@ -33,13 +33,13 @@ class Index:
         pos=0
         for token in tokens :
             if token in dict_to_fill.keys():
-                if url_id in dict_to_fill[token]:
-                    dict_to_fill[token][url_id].append(pos)
+                if str(url_id) in dict_to_fill[token]:
+                    dict_to_fill[token][str(url_id)].append(pos)
                 else:
-                    dict_to_fill[token][url_id]=[pos]
+                    dict_to_fill[token][str(url_id)]=[pos]
             else:
                 dict_to_fill[token]={}
-                dict_to_fill[token][url_id]=[pos]
+                dict_to_fill[token][str(url_id)]=[pos]
             pos+=1
         
 

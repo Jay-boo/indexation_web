@@ -41,22 +41,4 @@ def stemmer(text):
     return [fs.stem(token) for token in tokens]
     
 
-if __name__ == "__main__":
-    url="https://nvchad.com/"
-    ps=FrenchStemmer()
-    word=["irait","ira"]
-    print(ps.stem("boulangerie"))
-
-    # url="https://ensai.fr."
-    # print(get_url_title(url))
-    # print("---------")
-    # print(get_url_balise(url,"h1"))
-    # print("---------")
-
-    # Need to concat all h1 balise in get_url_balise
-
-
-
-
-
 

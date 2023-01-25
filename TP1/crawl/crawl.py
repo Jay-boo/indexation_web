@@ -27,7 +27,9 @@ class crawlerThread(Thread):
 
     def run(self):
         print(f"crawling ------------- {self.url}")
-        new_urls=self.crawler.get_allowed_urls_with_sitemaps(self.session,self.url)
+        # new_urls=self.crawler.get_allowed_urls_with_sitemaps(self.session,self.url)
+        # can't add progressivly page cause sqalchemy don't support adding data in thread
+        new_urls=self.crawler.get_allowed_urls_with_sitemaps(self.session,self.url,add_page_to_db=False)
         self.new_pages+=new_urls
         time.sleep(5)
         print(f"end------------- {self.url}:  count new pages : {len(self.new_pages)}")
@@ -47,7 +49,7 @@ class Crawler:
         self.output=[]
         self.visited_sitemaps=[]
 
-    def get_allowed_urls_with_sitemaps(self,session,url):
+    def get_allowed_urls_with_sitemaps(self,session,url,add_page_to_db=True):
         """
         Get new urls with sitemaps attached to the url
         """
@@ -72,6 +74,7 @@ class Crawler:
             try:
                 response=urlopen(sitemap)
             except:
+                print("can't open")
                 continue
 
             xml=BeautifulSoup(response,'lxml-xml',from_encoding=response.info().get_param('charset'))
@@ -81,7 +84,9 @@ class Crawler:
             urls=xml.find_all("url")
             for url in urls:
                 loc=url.findNext("loc").text
-                is_completed=self.add_page_to_db(session,loc,requests.get(loc).text,url_date(loc))
+                print(loc)
+                if add_page_to_db:
+                    is_completed=self.add_page_to_db(session,loc,requests.get(loc).text,url_date(loc))
                 if is_completed:
                     break
                 pages.append(loc)
@@ -184,7 +189,7 @@ class Crawler:
     def multiThread_crawl(self):
         Session=sessionmaker(bind=engine)
         session=Session()
-        first_allowed_urls=list(set(self.get_allowed_urls_with_sitemaps(session,self.seed)))
+        first_allowed_urls=list(set(self.get_allowed_urls_with_robots(session,self.seed)))
         time.sleep(5)
         self.frontier=first_allowed_urls
         self.output=first_allowed_urls
@@ -241,9 +246,7 @@ class Crawler:
                 if not flag:
                     break
                 counter+=1
-
             final_output=list(set(waiting_url_output+new_outputs))
-            print(len(final_output))
             
             #-----------------
             # Detect when we have no more url
@@ -255,14 +258,17 @@ class Crawler:
                 print("no more urls")
                 flag=False
 
+
             self.frontier=final_output
             self.output=final_output
             
             if not flag:
                 print("We have enough output or there is no more url ")
                 break
-        session.commit()
         self.output=self.output[0:self.stop]
+        #Add to db
+        # We can't add data to db while using Thread so we finally add them at the end
+        session.commit()
         return self.output    
 
 
@@ -290,7 +296,6 @@ class Crawler:
             page=Pages(url=url,document=document,date=date)
             session.add(page)
         return False
-
 
         
     def write_output_urls_in_text_file(self):

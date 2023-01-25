@@ -6,14 +6,14 @@ A minimal crawler with a single-threaded version and a multi-threaded one using 
 
 ## :rocket: How to use ?
 
-### Launch local
+### ⮕ Launch local
 
 
 #### Install packages
 ```
 pip install -r requirements
 ```
-#### ⮕ Launch crawler
+#### Launch crawler
  Three arguments:
  - `--url`:`str` : seed of the crawler. 
  - `--limit_pages`:`int` Number of page to collect. **Default value = 50**

@@ -1,0 +1,8 @@
+{
+    "before_index_stat": {
+        "tot_doc_in_db": 6,
+        "used_doc_count": 4,
+        "token_count": 18,
+        "mean_token_by_document": 4.5
+    }
+}

@@ -1,3 +1,4 @@
-tokenize
 requests
+numpy
 bs4
+nltk

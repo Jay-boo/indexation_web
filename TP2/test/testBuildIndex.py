@@ -24,17 +24,18 @@ class testBuildIndex(TestCase):
         index.flatten_doc_tokens=flatten_token
         index.build_indexes()
         expected_index={
-                "Paul":[0],
-                "mange":[0,1],
-                "une":[0,1],
-                "pomme":[0],
-                "dans":[0,1],
-                "le":[0],
-                "jardin":[0],
-                "Jean":[1],
-                "poire":[1],
-                "la":[1],
-                "cuisine":[1]
+                        "Paul":{"0":1},
+                        "mange":{"0":1,
+                                 "1":1},
+                        "une":{"0":1,"1":1},
+                        "pomme":{"0":1},
+                        "dans":{"0":1,"1":1},
+                        "le":{"0":1},
+                        "jardin":{"0":1},
+                        "Jean":{"1":1},
+                        "poire":{"1":1},
+                        "la":{"1":1},
+                        "cuisine":{"1":1}
 
         }
         
@@ -42,7 +43,36 @@ class testBuildIndex(TestCase):
         for key, value in index.index.items():
             self.assertEqual(value,expected_index[key])
 
+        index=Index()
+        index.flatten_doc_tokens=flatten_token_bis
+        index.build_indexes()
+        expected_index={
+                        "Paul":{"0":1},
+                        "mange":{"0":1,
+                                 "1":1},
+                        "pomme":{"0":1},
+                        "dans":{"0":1,"1":1},
+                        "chambre":{"0":1},
+                        "Jean":{"1":1},
+                        "poire":{"1":1},
+                        "la":{"0":2,"1":2},
+                        "cuisine":{"1":1}
+
+        }
+        
+        self.assertEqual(len(index.index.keys()),len(expected_index.keys()))
+        for key, value in index.index.items():
+            self.assertEqual(value,expected_index[key])
+
+
+
+
+
+
     def testPositionalIndex(self):
+        """
+        Test positional index
+        """
         index=Index()
         index.flatten_doc_tokens=flatten_token_bis
         index.build_indexes()

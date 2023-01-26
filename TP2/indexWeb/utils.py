@@ -7,26 +7,22 @@ def clean_text(text):
     text=re.sub(r"[^\w\s]","",text.lower())
     return text
 
-def get_url_title(url):
-    resp=requests.get(url)
-    if resp.ok:
-        soup=BeautifulSoup(resp.text,'html.parser')
-        title=soup.find_all('title')[0].get_text()
-        return title
 
 def get_url_balise(url,balise:str):
-    resp=requests.get(url)
+    resp=requests.get(url,timeout=5)
     if resp.ok:
+        #timeout response will not pass here
+
         soup=BeautifulSoup(resp.text,'html.parser')
         found_balise=soup.find_all(balise)
-        print(found_balise)
         if found_balise: 
             concat_text=''
             for balise in found_balise:
                 concat_text+=balise.get_text()+" "
             return concat_text
         else:
-            return ''
+            return ''# Return by docuemnt whitout the asked content asked
+    return ''# Return by timeout urls
         
 
 
@@ -40,5 +36,4 @@ def stemmer(text):
     tokens=tokenize(text)
     return [fs.stem(token) for token in tokens]
     
-
 

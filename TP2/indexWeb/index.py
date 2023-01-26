@@ -1,6 +1,7 @@
 import json
+from tqdm import tqdm
+from collections import Counter
 import numpy as np
-
 from indexWeb.utils import get_url_balise, tokenize, stemmer
 
 
@@ -22,11 +23,16 @@ class Index:
 
 
     def build_basic_index(self,tokens,url_id,dict_to_fill):
-        for token in tokens:
+        """
+        fill dict_to_fill using document tokens , and document id
+
+        """
+        counter_tokens=Counter(tokens)
+        for token,count in counter_tokens.items():
             if token not in dict_to_fill.keys():
-                dict_to_fill[token]=[url_id]
+                dict_to_fill[token]={str(url_id):count}
             else:
-                dict_to_fill[token].append(url_id)
+                dict_to_fill[token][str(url_id)]=count
 
 
     def build_positional_index(self,tokens,url_id,dict_to_fill):
@@ -67,34 +73,65 @@ class Index:
             counter+=1
         
 
-    def load_urls_from_json(self,filename:str):
+    def load_urls_from_json(self,filename:str,dir="outputs/"):
+        """
+        Create self.flatten_doc_tokens and self.flatten_doc_tokens_stem
+        Moreover filtered urls keeping only reachable urls in outputs/filtered_crawled_urls.json
+
+        Not keeped urls: 
+            
+            - Not reachable urls 
+            - No html tag self.content_tag in the document
+
+        """
         flag=False
         f=open(filename)
         self.urls=json.load(f)
-        self.urls=self.urls[0:6]
+        progressBar=tqdm(total=len(self.urls),desc=f"Looking at urls in {filename} ")
         filtered_urls=[]
+
+
+
         for url in self.urls:
             try:
                 text=get_url_balise(url,self.content_tag)
                 tokens=tokenize(text)
-                self.flatten_doc_tokens.append(tokens)
-                if self.use_stemmer:
-                    self.flatten_doc_tokens_stem.append(stemmer(text))
-                filtered_urls.append(url)
+                if len(tokens)>0:
+                    self.flatten_doc_tokens.append(tokens)
+                    if self.use_stemmer:
+                        stem_tokens=stemmer(text)
+                        self.flatten_doc_tokens_stem.append(stem_tokens)
+                    filtered_urls.append(url)
+                else:
+                    #url timeout or no content in this document so it s kick out of the DB 
+                    flag=True
+                    progressBar.update(1)
+                    continue
             except:
+                # print("error raised during the request.get")
+                # If error raised here , its mean that get_url_balise raised an error 
+                # requests.exceptions.ReadTimeout, requests.exceptions.ConnectTimeoutError, urllib3.exceptions.ConnectTimeoutError 
+                # This erorr is due to request.get error
                 flag=True
+                progressBar.update(1)
                 continue
+            progressBar.update(1)
+        progressBar.close()
         if flag:
-            print("some urls are not reachable , the filtered crawled urls are store in filtered_crawled_urls.json")
+            print("some urls are not reachable, the filtered crawled urls are store in filtered_crawled_urls.json")
         #----------------------
         #save reachable urls in a new json
-        with open("outputs/filtered_crawled_urls.json", "w") as outfile:
+        with open(f"{dir}filtered_crawled_urls.json", "w") as outfile:
             json.dump(
                    filtered_urls, 
                       outfile,
                       ensure_ascii=False,
                       indent=4
             )
+
+        # Assert every kept crawled_urls has at least one token
+        for doc in self.flatten_doc_tokens:
+            assert (len(doc) >0)
     
 
 

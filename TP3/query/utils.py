@@ -1,10 +1,14 @@
 import re
 import json
 
+# def load_index_from_json(filename:str):
+#     f=open(filename)
+#     return json.load(f)
+#
 def load_index_from_json(filename:str):
-    f=open(filename)
-    return json.load(f)
-
+    with open(filename,'r')as file:
+        data=json.load(file)
+    return data 
 
 def clean_text(text):
     text=re.sub(r"[^\w\s]","",text.lower())
@@ -16,8 +20,9 @@ def tokenize(text):
     return tokens
 
 def load_document_db(filename:str):
-    f=open(filename)
-    return json.load(f)
+    with open(filename,'r')as file:
+        data=json.load(file)
+    return data 
 
 
 def export_result_in_json(filename:str,data):
@@ -29,6 +34,6 @@ def export_result_in_json(filename:str,data):
                 indent=4
                 )
     
-
+    
 
 

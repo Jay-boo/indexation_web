@@ -1,4 +1,4 @@
-name: test_python_POO
+name: test_TP2
 
 on:
   push:

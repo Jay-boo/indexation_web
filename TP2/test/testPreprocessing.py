@@ -14,10 +14,8 @@ class testPreProcessing(TestCase):
         """
         # url_timeout="http://www.amisducadrenoir.fr/"
         # url_error_raised="http://www.corriges.net"
-        print("--------------test token --------------")
         index=Index()
         index.load_urls_from_json("test/test_preprocessing_urls.json",dir="test/")
-        print(index.flatten_doc_tokens)
         self.assertEqual(len(index.flatten_doc_tokens),2)
 
 
@@ -28,8 +26,6 @@ class testPreProcessing(TestCase):
         #IF loading few URLS with some of then unreachable
         index=Index()
         index.load_urls_from_json("test/test_preprocessing_urls.json",dir="test/")
-        print("test -flaten ----------------")
-        print(index.flatten_doc_tokens)
 
         # THEN unreachable urls don't appears in flatten_doc_token and flatten_doc_tokens_stem
         expected_flatten_token=[['karine','lacombe','wikipédia'],['nuit','de','cristal','wikipédia']]

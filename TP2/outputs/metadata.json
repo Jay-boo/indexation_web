@@ -1,8 +1,8 @@
 {
     "before_index_stat": {
         "tot_doc_in_db": 500,
-        "used_doc_count": 430,
-        "token_count": 3217,
-        "mean_token_by_document": 7.481395348837209
+        "used_doc_count": 428,
+        "token_count": 3148,
+        "mean_token_by_document": 7.355140186915888
     }
 }

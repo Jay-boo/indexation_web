@@ -11,7 +11,6 @@ flatten_token=[
 flatten_token_bis=[
         ["Paul","mange","la","pomme","dans","la","chambre"],
         ["Jean","mange","la","poire","dans","la","cuisine"]
-
         ]
 
 

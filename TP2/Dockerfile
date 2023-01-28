@@ -15,6 +15,4 @@ COPY  test/ test/
 
 RUN python3  -m unittest discover test
 
-
-
 ENTRYPOINT [ "python3" ,"main.py"]

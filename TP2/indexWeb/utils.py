@@ -35,5 +35,14 @@ def stemmer(text):
     fs=FrenchStemmer()
     tokens=tokenize(text)
     return [fs.stem(token) for token in tokens]
-    
+
+if __name__ == "__main__":
+    urls=[
+      "http://www.amisducadrenoir.fr/",
+	    "https://fr.wikipedia.org/wiki/Karine_Lacombe",
+      "http://www.corriges.net",
+	    "https://fr.wikipedia.org/wiki/Nuit_de_Cristal"
+    ]
+    for url in urls:
+        print(get_url_balise(url,balise="title"))
 

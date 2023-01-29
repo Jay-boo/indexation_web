@@ -70,7 +70,9 @@ class Query:
 
 
     def setRankingFunction(self,rf:RankingFunction):
+        """ Set ranking function"""
         self.rankingFunction=rf
+
 
 
     def run(self):

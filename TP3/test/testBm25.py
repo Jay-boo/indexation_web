@@ -12,7 +12,7 @@ class TestBm25(TestCase):
         tokenized_request=["patricia","wikipédia","token"]
         for id  in range(0,4):
             freqs=rf.get_query_tokens_freq(
-                    {"id":str(id)}
+                    {"id":id}
                     ,tokenized_request)
             if id==0:
                 self.assertEqual(freqs,
@@ -34,7 +34,7 @@ class TestBm25(TestCase):
         tokenized_request=["wikipédia","patricia","avec","wikipédia"]
         for id  in range(0,4):
             freqs=rf.get_query_tokens_freq(
-                    {"id":str(id)}
+                    {"id":id}
                     ,tokenized_request)
             if id==0:
                 self.assertEqual(freqs,
@@ -59,7 +59,7 @@ class TestBm25(TestCase):
         rf=bm25("test/testIndex_basics_index.json")
         tokenized_request=["patricia","wikipédia","token"]
         self.assertRaises(
-                ValueError,rf.get_query_tokens_freq,{"id":"4"},tokenized_request
+                ValueError,rf.get_query_tokens_freq,{"id":4},tokenized_request
                 ) 
 
 

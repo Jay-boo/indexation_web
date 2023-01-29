@@ -24,7 +24,7 @@ class bm25(RankingFunction):
         counter=0
         for token in tokenized_request:
             freq=freqs[counter]
-            score += self.IDF(token,N) *((freq*(k1+1))/freq+k1*(1-b+b*(fieldLen/avgFieldLen)))
+            score += self.IDF(token,N) *( (freq*(k1+1))/(freq+k1*(1-b+b*(fieldLen/avgFieldLen))))
             counter+=1
         return score
 
@@ -34,11 +34,11 @@ class bm25(RankingFunction):
         freqs=[]
         total_tokens_count=self.get_doc_total_nb_tokens(doc)
         if total_tokens_count==0:
-            raise ValueError("Document id not in index")
+            raise ValueError(f"Document id not in index {doc}")
             
         for token in tokenized_request:
             try: 
-                token_count=self.attached_index[token][doc["id"]]["count"]
+                token_count=self.attached_index[token][str(doc["id"])]["count"]
             except KeyError:
                 token_count=0
             freqs.append(token_count/total_tokens_count)
@@ -53,8 +53,8 @@ class bm25(RankingFunction):
         """
         tot=0
         for  key,value in self.attached_index.items():
-            if doc["id"] in  value.keys():
-                tot += value[doc["id"]]["count"]
+            if str(doc["id"]) in  value.keys():
+                tot += value[str(doc["id"])]["count"]
         return tot
 
 

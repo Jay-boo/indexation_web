@@ -83,9 +83,8 @@ class Query:
         else:
             docs=self.filter_documents_with_at_least_one_token()
 
-        print("------------filter")
-        print(docs)
-        print("-------------------")
+        print("------------filtering document")
+        print(f"results contains {len(docs)} documents")
         
         #-------------------------------
         # Calculate score for each doc
@@ -93,8 +92,10 @@ class Query:
         for doc in docs:
             doc["score"]=self.rankingFunction.calculate_score(doc,tokenized_request)
         docs.sort(key=lambda doc:doc["score"],reverse=True)
+        print(f"More recommended document :{docs[0]}")
         export_result_in_json("results.json",docs)
         print("results export to results.json")
+        print("-------------------")
         return docs 
     
 

@@ -7,6 +7,15 @@ Create multiple indexes based on the urls in `crawled_urls.json`:
  
 &rarr; The resulting indexes are stored in the `outputs` directory
 
+`{stem}.{contentTag}.{indexType}.json`
+
+- `stem`: indicate use of stemmer
+- `contentTag` : indicate the html tag used  *ex : title, h1,...*
+- `indexType`: `pos_index` or `non_pos_index`
+
+Moreover in the `outputs` directory there is `metadata.json` that contains some statistics on indexes built, and `filtered_crawled_urls.json` that contains the effective urls used in indexes.
+
+
 ***
 
 # :rocket: Lauch

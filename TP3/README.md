@@ -4,7 +4,7 @@ Return the list of documents from the two json files according to a query :
  - `index.json` : index 
  -  `documents.json` : contains information on each document
 
-
+***
 
 
 ## Prerequis
@@ -19,7 +19,7 @@ Return the list of documents from the two json files according to a query :
   ...
 }
 ```
-and with the following preprocessing: tokenize with space splits + lower text *(query and documents need to be similarly preprocessed)*
+and with the following preprocessing: **tokenize with space splits + lower text** *(query and documents need to be similarly preprocessed)*
 
 
 - `documents.json` containing documents content and urls int the following form:
@@ -35,7 +35,7 @@ and with the following preprocessing: tokenize with space splits + lower text *(
 ]
 ```
 
-
+*used files provided in the repository*
 
 
 ***
@@ -46,7 +46,7 @@ and with the following preprocessing: tokenize with space splits + lower text *(
 
 ```
 git clone git@github.com:Jay-boo/indexation_web.git
-cd TP3
+cd indexation_web/TP3
 pip install -r requirements.txt 
 python3 main.py 
 ```

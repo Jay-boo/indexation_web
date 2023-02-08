@@ -72,6 +72,6 @@ A document that respect query token order will be rate better than another that 
 
 
 
-**Moreover stopwords are lighter in score calculation that others in every rankingFunction (bm25 and `CustomLinearFunction`)**
+**Moreover stopwords are lighter in score calculation that others in `CustomLinearFunction`**
 
 

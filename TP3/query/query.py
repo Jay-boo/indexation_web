@@ -92,7 +92,10 @@ class Query:
         for doc in docs:
             doc["score"]=self.rankingFunction.calculate_score(doc,tokenized_request)
         docs.sort(key=lambda doc:doc["score"],reverse=True)
-        print(f"More recommended document :{docs[0]}")
+        if len(docs)>0:
+            print(f"More recommended document :{docs[0]}")
+        else:
+            print(f"No recommended document")
         export_result_in_json("results.json",docs)
         print("results export to results.json")
         print("-------------------")
